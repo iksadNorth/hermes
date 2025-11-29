@@ -20,6 +20,18 @@ variable "key_name" {
   type        = string
 }
 
+variable "ssh_private_key_path" {
+  description = "SSH private key 파일 경로 (원격 스크립트 실행용)"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
+variable "allowed_ssh_cidr" {
+  description = "SSH 접근을 허용할 CIDR 블록 (비어있으면 Terraform 실행 노드의 공인 IP 자동 감지)"
+  type        = string
+  default     = ""
+}
+
 variable "subnet_id" {
   description = "EC2 인스턴스를 배치할 서브넷 ID"
   type        = string
