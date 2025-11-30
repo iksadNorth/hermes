@@ -1,7 +1,10 @@
 # AWS EC2 노드 생성
 data "http" "current_ip" {
-  url = "https://ifconfig.me"
-  request_headers = { Accept = "text/plain" }
+  url = "https://api.ipify.org"
+  
+  request_headers = {
+    Accept = "text/plain"
+  }
 }
 
 resource "aws_security_group" "k8s_node" {
@@ -22,7 +25,7 @@ resource "aws_security_group" "k8s_node" {
     to_port     = 65535
     protocol    = "tcp"
     cidr_blocks = ["192.168.45.0/24"]
-    description = "온프레미스에서 클라우드 노드로 접근"
+    description = "On-premise to cloud node access"
   }
 
   ingress {
@@ -30,23 +33,23 @@ resource "aws_security_group" "k8s_node" {
     to_port     = 65535
     protocol    = "udp"
     cidr_blocks = ["192.168.45.0/24"]
-    description = "온프레미스에서 클라우드 노드로 접근"
+    description = "On-premise to cloud node access"
   }
 
   # Kubelet API (노드 간 통신)
   ingress {
-    from_port   = 10250
-    to_port     = 10250
-    protocol    = "tcp"
-    self        = true
+    from_port = 10250
+    to_port   = 10250
+    protocol  = "tcp"
+    self      = true
   }
 
   # Kube-proxy health check
   ingress {
-    from_port   = 10259
-    to_port     = 10259
-    protocol    = "tcp"
-    self        = true
+    from_port = 10259
+    to_port   = 10259
+    protocol  = "tcp"
+    self      = true
   }
 
   # NodePort 서비스 (30000-32767)
@@ -94,7 +97,17 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hub/ubuntu-jammy-22.04-amd64-server-*"]
+    values = ["ubuntu/images/*/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
   }
 }
 
