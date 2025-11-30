@@ -1,31 +1,10 @@
-# AWS 설정
-aws_region     = "ap-northeast-2"
-node_name      = "cloud-node-01"
-instance_type  = "t3.medium"
-key_name       = "your-key-pair-name"
-subnet_id      = "subnet-xxxxxxxxx"
+node_name                = "cloud-node-01"
+key_name                 = "your-key-pair-name"
+# subnet_id              = ""  # 비어있으면 자동 생성된 VPC의 public 서브넷 사용
 
-# SSH 설정
-ssh_private_key_path = "~/.ssh/id_rsa"
-# allowed_ssh_cidr = ""  # 비어있으면 자동 감지
+k8s_cluster_endpoint     = "https://your-k8s-api-server:6443"
+k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64
+k8s_cluster_token        = "your-k8s-token"
+k8s_join_command         = "kubeadm join ..."
 
-# Kubernetes 클러스터 설정
-k8s_cluster_endpoint       = "https://your-k8s-api-server:6443"
-k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64 인코딩된 CA 인증서
-k8s_cluster_token          = "your-k8s-token"
-k8s_join_command           = "kubeadm join ..." # 또는 EKS bootstrap 스크립트
-
-# 라벨 설정
-cloud_label_key   = "cloud-server"
-cloud_label_value  = "true"
-# additional_labels = {
-#   "environment" = "production"
-#   "node-type"   = "compute"
-# }
-
-# 태그
-# tags = {
-#   "Project" = "hermes"
-#   "Team"    = "platform"
-# }
-
+ssh_private_key_path      = "~/.ssh/id_rsa"

@@ -1,0 +1,13 @@
+# 노드 라벨 추가
+resource "null_resource" "label_node" {
+  depends_on = [null_resource.join_cluster]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      kubectl --server=${var.k8s_cluster_endpoint} \
+        --token=${var.k8s_cluster_token} \
+        --certificate-authority-data=${var.k8s_cluster_ca_certificate} \
+        label nodes ${var.node_name} cloud-server=true --overwrite
+    EOT
+  }
+}

@@ -1,18 +1,6 @@
-variable "aws_region" {
-  description = "AWS 리전"
-  type        = string
-  default     = "ap-northeast-2"
-}
-
 variable "node_name" {
   description = "K8s 노드 이름"
   type        = string
-}
-
-variable "instance_type" {
-  description = "EC2 인스턴스 타입"
-  type        = string
-  default     = "t3.medium"
 }
 
 variable "key_name" {
@@ -20,27 +8,10 @@ variable "key_name" {
   type        = string
 }
 
-variable "ssh_private_key_path" {
-  description = "SSH private key 파일 경로 (원격 스크립트 실행용)"
-  type        = string
-  default     = "~/.ssh/id_rsa"
-}
-
-variable "allowed_ssh_cidr" {
-  description = "SSH 접근을 허용할 CIDR 블록 (비어있으면 Terraform 실행 노드의 공인 IP 자동 감지)"
+variable "subnet_id" {
+  description = "EC2 인스턴스를 배치할 서브넷 ID (비어있으면 자동 생성된 public 서브넷 사용)"
   type        = string
   default     = ""
-}
-
-variable "subnet_id" {
-  description = "EC2 인스턴스를 배치할 서브넷 ID"
-  type        = string
-}
-
-variable "security_group_ids" {
-  description = "EC2 인스턴스에 적용할 보안 그룹 ID 목록"
-  type        = list(string)
-  default     = []
 }
 
 variable "k8s_cluster_endpoint" {
@@ -61,32 +32,14 @@ variable "k8s_cluster_token" {
 }
 
 variable "k8s_join_command" {
-  description = "Kubernetes 클러스터 조인 명령어 (kubeadm join 또는 EKS bootstrap 스크립트)"
+  description = "Kubernetes 클러스터 조인 명령어"
   type        = string
   sensitive   = true
 }
 
-variable "cloud_label_key" {
-  description = "클라우드 서버를 나타내는 라벨 키"
+variable "ssh_private_key_path" {
+  description = "SSH private key 파일 경로"
   type        = string
-  default     = "cloud-server"
-}
-
-variable "cloud_label_value" {
-  description = "클라우드 서버를 나타내는 라벨 값"
-  type        = string
-  default     = "true"
-}
-
-variable "additional_labels" {
-  description = "추가로 설정할 노드 라벨 (key-value 맵)"
-  type        = map(string)
-  default     = {}
-}
-
-variable "tags" {
-  description = "EC2 인스턴스에 추가할 태그"
-  type        = map(string)
-  default     = {}
+  default     = "~/.ssh/id_rsa"
 }
 
