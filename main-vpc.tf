@@ -1,6 +1,6 @@
-# VPC 생성 (192.168.45.0/24는 온프레미스용이므로 10.0.0.0/16 사용)
+# VPC 생성 (192.168.45.0/24는 온프레미스용이므로 10.244.0.0/16 사용)
 resource "aws_vpc" "hermes" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = "10.244.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
 
