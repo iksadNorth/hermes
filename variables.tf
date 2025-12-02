@@ -4,8 +4,9 @@ variable "node_name" {
 }
 
 variable "key_name" {
-  description = "AWS EC2 Key Pair 이름"
+  description = "AWS EC2 Key Pair 이름 (비어있으면 자동 생성)"
   type        = string
+  default     = ""
 }
 
 variable "subnet_id" {
@@ -37,11 +38,6 @@ variable "k8s_join_command" {
   sensitive   = true
 }
 
-variable "ssh_private_key_path" {
-  description = "SSH private key 파일 경로"
-  type        = string
-  default     = "~/.ssh/id_rsa"
-}
 
 variable "k8s_api_server_domain" {
   description = "Kubernetes API 서버 도메인 (예: main-node.me)"

@@ -17,3 +17,14 @@ output "vpc_cidr" {
 output "public_subnet_id" {
   value = aws_subnet.public.id
 }
+
+output "ssh_private_key_path" {
+  description = "생성된 SSH private key 파일 경로"
+  value       = local_file.private_key.filename
+  sensitive   = false
+}
+
+output "ssh_key_name" {
+  description = "AWS Key Pair 이름"
+  value       = aws_key_pair.hermes.key_name
+}
