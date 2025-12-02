@@ -121,6 +121,8 @@ resource "aws_instance" "k8s_node" {
   user_data = base64encode(<<-EOF
     #!/bin/bash
     export NODE_NAME="${var.node_name}"
+    export K8S_API_SERVER_DOMAIN="${var.k8s_api_server_domain}"
+    export K8S_API_SERVER_IP="${var.k8s_api_server_ip}"
     ${file("${path.module}/scripts/init-node.sh")}
   EOF
   )

@@ -43,3 +43,15 @@ variable "ssh_private_key_path" {
   default     = "~/.ssh/id_rsa"
 }
 
+variable "k8s_api_server_domain" {
+  description = "Kubernetes API 서버 도메인 (예: main-node.me)"
+  type        = string
+  default     = ""
+}
+
+variable "k8s_api_server_ip" {
+  description = "Kubernetes API 서버 공인 IP (도메인 매핑용)"
+  type        = string
+  default     = ""
+}
+

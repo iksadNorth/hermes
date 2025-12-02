@@ -7,4 +7,8 @@ k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64
 k8s_cluster_token        = "your-k8s-token"
 k8s_join_command         = "kubeadm join ..."
 
+# API 서버 도메인 매핑 (선택사항)
+k8s_api_server_domain    = "main-node.me"  # 도메인
+k8s_api_server_ip       = "1.2.3.4"       # API 서버 공인 IP
+
 ssh_private_key_path      = "~/.ssh/id_rsa"
