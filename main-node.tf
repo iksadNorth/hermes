@@ -1,12 +1,3 @@
-# AWS EC2 노드 생성
-data "http" "current_ip" {
-  url = "https://api.ipify.org"
-  
-  request_headers = {
-    Accept = "text/plain"
-  }
-}
-
 # SSH 키 자동 생성
 resource "tls_private_key" "hermes" {
   algorithm = "RSA"
@@ -34,83 +25,94 @@ resource "aws_security_group" "k8s_node" {
   name   = "hermes-k8s-node-${var.node_name}"
   vpc_id = aws_vpc.hermes.id
 
-  # SSH 접근 (Terraform 실행 노드만)
+  # SSH 접근 (개발자 로컬 IP만)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.current_ip.response_body)}/32"]
+    cidr_blocks = [var.developer_local_ip]
+    description = "SSH access from developer local IP"
   }
 
-  # 온프레미스에서 클라우드 노드로 접근 (192.168.45.0/24)
+  # Kubernetes API 서버 (TCP 6443) - 노드 간 통신
   ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
-    cidr_blocks = ["192.168.45.0/24"]
-    description = "On-premise to cloud node access"
-  }
-
-  ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "udp"
-    cidr_blocks = ["192.168.45.0/24"]
-    description = "On-premise to cloud node access"
-  }
-
-  # Kubelet API (노드 간 통신)
-  ingress {
-    from_port = 10250
-    to_port   = 10250
-    protocol  = "tcp"
-    self      = true
-  }
-
-  # Kube-proxy health check
-  ingress {
-    from_port = 10259
-    to_port   = 10259
-    protocol  = "tcp"
-    self      = true
-  }
-
-  # NodePort 서비스 (30000-32767)
-  ingress {
-    from_port   = 30000
-    to_port     = 32767
+    from_port   = 6443
+    to_port     = 6443
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Kubernetes API server"
   }
 
+  # Kubelet API (TCP 10250) - 노드 간 통신
   ingress {
-    from_port   = 30000
-    to_port     = 32767
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-  }
-
-  # Pod-to-Pod 통신 (VPC 내부 모든 포트)
-  ingress {
-    from_port   = 0
-    to_port     = 65535
+    from_port   = 10250
+    to_port     = 10250
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Kubelet API"
   }
 
+  # Pod 간 통신 (UDP 8472) - Flannel VXLAN
   ingress {
-    from_port   = 0
-    to_port     = 65535
+    from_port   = 8472
+    to_port     = 8472
     protocol    = "udp"
     cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Pod-to-Pod communication (Flannel VXLAN)"
   }
 
-  # 모든 아웃바운드 허용 (API 서버, 이미지 다운로드 등)
+  # 아웃바운드: Kubernetes API 서버 (TCP 6443)
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Kubernetes API server outbound"
+  }
+
+  # 아웃바운드: Kubelet API (TCP 10250)
+  egress {
+    from_port   = 10250
+    to_port     = 10250
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Kubelet API outbound"
+  }
+
+  # 아웃바운드: Pod 간 통신 (UDP 8472)
+  egress {
+    from_port   = 8472
+    to_port     = 8472
+    protocol    = "udp"
+    cidr_blocks = [aws_vpc.hermes.cidr_block]
+    description = "Pod-to-Pod communication outbound (Flannel VXLAN)"
+  }
+
+  # 아웃바운드: HTTPS (443) - 이미지 다운로드, API 호출 등
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS outbound for image pulls and API calls"
+  }
+
+  # 아웃바운드: HTTP (80) - 패키지 다운로드 등
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTP outbound for package downloads"
+  }
+
+  # 아웃바운드: DNS (UDP 53)
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS outbound"
   }
 }
 

@@ -51,3 +51,7 @@ variable "k8s_api_server_ip" {
   default     = ""
 }
 
+variable "developer_local_ip" {
+  description = "개발자 로컬 IP 주소 (CIDR 형식, 예: 1.2.3.4/32)"
+  type        = string
+}

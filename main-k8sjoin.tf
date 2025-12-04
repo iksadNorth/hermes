@@ -10,7 +10,7 @@ resource "null_resource" "wait_for_ssh" {
     command = <<-EOT
       for i in {1..60}; do
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-          -i ${var.ssh_private_key_path} \
+          -i ${local_file.private_key.filename} \
           ubuntu@${local.ssh_host} "echo ok" && exit 0
         sleep 5
       done
@@ -24,10 +24,10 @@ resource "null_resource" "join_cluster" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      scp -o StrictHostKeyChecking=no -i ${var.ssh_private_key_path} \
+      scp -o StrictHostKeyChecking=no -i ${local_file.private_key.filename} \
         ${path.module}/scripts/join-cluster.sh ubuntu@${local.ssh_host}:/tmp/
       
-      ssh -o StrictHostKeyChecking=no -i ${var.ssh_private_key_path} \
+      ssh -o StrictHostKeyChecking=no -i ${local_file.private_key.filename} \
         ubuntu@${local.ssh_host} \
         "chmod +x /tmp/join-cluster.sh && \
          NODE_NAME='${var.node_name}' \
