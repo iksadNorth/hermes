@@ -35,6 +35,8 @@ resource "null_resource" "join_cluster" {
          K8S_CLUSTER_ENDPOINT='${var.k8s_cluster_endpoint}' \
          K8S_CLUSTER_TOKEN='${var.k8s_cluster_token}' \
          K8S_CLUSTER_CA_CERT='${var.k8s_cluster_ca_certificate}' \
+         K8S_API_SERVER_DOMAIN='${var.k8s_api_server_domain}' \
+         K8S_API_SERVER_IP='${var.k8s_api_server_ip}' \
          /tmp/join-cluster.sh"
     EOT
   }

@@ -61,58 +61,13 @@ resource "aws_security_group" "k8s_node" {
     description = "Pod-to-Pod communication (Flannel VXLAN)"
   }
 
-  # 아웃바운드: Kubernetes API 서버 (TCP 6443)
+  # 아웃바운드: 모든 트래픽 허용
   egress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-    description = "Kubernetes API server outbound"
-  }
-
-  # 아웃바운드: Kubelet API (TCP 10250)
-  egress {
-    from_port   = 10250
-    to_port     = 10250
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-    description = "Kubelet API outbound"
-  }
-
-  # 아웃바운드: Pod 간 통신 (UDP 8472)
-  egress {
-    from_port   = 8472
-    to_port     = 8472
-    protocol    = "udp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-    description = "Pod-to-Pod communication outbound (Flannel VXLAN)"
-  }
-
-  # 아웃바운드: HTTPS (443) - 이미지 다운로드, API 호출 등
-  egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS outbound for image pulls and API calls"
-  }
-
-  # 아웃바운드: HTTP (80) - 패키지 다운로드 등
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP outbound for package downloads"
-  }
-
-  # 아웃바운드: DNS (UDP 53)
-  egress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "DNS outbound"
+    description = "Allow all outbound traffic"
   }
 }
 
