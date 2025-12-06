@@ -50,6 +50,44 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
+### 1-4-1. Control Plane 노드를 워커 노드로도 사용하기 (선택사항)
+
+기본적으로 Control Plane 노드는 taint가 있어서 일반 Pod가 스케줄링되지 않습니다. Control Plane 노드도 워커 노드로 사용하려면 taint를 제거하세요:
+
+```bash
+# 1단계: 현재 taint 확인
+kubectl describe node <노드이름> | grep Taints
+
+# 출력 예시:
+# - Taints: node-role.kubernetes.io/control-plane:NoSchedule (taint가 있음)
+# - Taints: <none> (taint가 없음, 이미 워커 노드로 사용 가능)
+
+# 2단계: taint 제거 (taint가 있는 경우만)
+# Kubernetes 1.24+ 버전
+kubectl taint nodes <노드이름> node-role.kubernetes.io/control-plane:NoSchedule-
+
+# 또는 구버전 Kubernetes (1.23 이하)
+kubectl taint nodes <노드이름> node-role.kubernetes.io/master:NoSchedule-
+
+# 3단계: 확인
+kubectl describe node <노드이름> | grep Taints
+# 출력: Taints: <none> (또는 아무것도 없음)
+
+# 4단계: 테스트 (Pod가 스케줄링되는지 확인)
+kubectl run test-pod --image=nginx --restart=Never
+kubectl get pod test-pod -o wide
+kubectl delete pod test-pod
+```
+
+**참고:**
+- "taint not found" 에러가 발생하면 이미 taint가 없는 상태입니다
+- 이 경우 노드는 이미 워커 노드로 사용 가능합니다
+
+**주의사항:**
+- Control Plane 노드에 워크로드를 실행하면 리소스 경합이 발생할 수 있습니다
+- 프로덕션 환경에서는 Control Plane과 워커 노드를 분리하는 것을 권장합니다
+- 테스트 환경이나 리소스가 제한적인 경우에만 사용하세요
+
 ### 1-5. Control Plane 정보 확인
 
 ```bash
