@@ -6,94 +6,82 @@
 
 *그림 0: 길 잃은 양들을 인도하는 헤르메스 그림*
 
-해당 프로젝트는 과도한 트래픽으로 인해 IP 차단된 크롤링 노드들을 새로운 서버로 자리를 바꿔 
-작업순단없이 작업을 이어갈 수 있도록 도움을 주는 작업을 수행합니다.
+해당 프로젝트는 과도한 트래픽으로 인해 IP 차단된 크롤링 노드들을 새로운 AWS 클라우드 서버로 자리를 바꿔 
+작업 순단 없이 작업을 이어갈 수 있도록 도움을 주는 작업을 수행합니다.
 
-AWS 클라우드 서버에 새로운 노드를 생성하고 Kubernetes 클러스터에 통합합니다.
-그리고 IP 차단된 크롤링 컨테이너들을 다시 새로운 노드에 띄웁니다.
+온프레미스에 구축된 Kubernetes Control Plane과 AWS 클라우드 노드를 연결하는 하이브리드 클러스터를 구성합니다.
+Terraform을 사용하여 AWS EC2 인스턴스를 자동으로 생성하고, Kubernetes 클러스터에 자동으로 조인시킵니다.
+IP 차단된 크롤링 컨테이너들을 새로운 클라우드 노드로 자동으로 마이그레이션할 수 있습니다.
 
-이 모든 것은 사람이 직접 수행하는 것이 아닌 Terraform이라는 IaC 툴을 이용하여 자동화를 이뤘습니다.
+이 모든 것은 사람이 직접 수행하는 것이 아닌 Terraform이라는 IaC(Infrastructure as Code) 툴을 이용하여 자동화를 이뤘습니다.
 
 ![시스템 아키텍처](documents/architecture-diagram.png)
 
 ## 왜 이런 식으로 만들었나요?
 
-- **크롤링 데이터 수집할 때마다 HTML 구조 분석하는 거 너무 힘들다..**
-  - 화면 녹화 매크로 툴을 사용해보자! - [1]
-- **웹 프로덕트 테스트를 수기로 하니까 너무 귀찮다. 해야하는 건데 후순위로 밀리게 되네..**
-  - 화면 녹화 매크로 툴을 사용해보자! - [2]
-- **1개의 페이지를 재귀적으로 크롤링하니까 20분 정도 걸리네. 너무 오래걸린다..**
-  - 병렬 분산 처리를 통해 시간 단축을 해보자!
-- **데이터 파이프라인에 편입하려면 Airflow 이미지 크기가 비대해진다. 빌드 시간이 너무 오래걸린다..**
-  - REST API 웹서버로 만들어서 HTTP 통신으로 단순화해보자!
-- **크롤링할 때마다 크롬창을 띄워야 하니 리소스 낭비가 너무 심하다..**
-  - 서버 가동 시, 미리 크롬창을 여러 개 띄워놓고 재활용해보자!
-- **세션 재활용을 하니까 동시에 하나의 세션을 사용하면 간섭이 일어나네..**
-  - 요청당 Lock을 부여해서 트랜잭션을 구현해보자!
-- **아니 네이버에 검색하는 시나리오를 키워드마다 녹화해야 하나? 녹화 작업에 시간을 너무 많이 쏟아야 하는데..**
-  - Side 파일 자체를 Jinja2 템플릿화해서 1번의 녹화로 N개의 시나리오로 만들어보자!
+- **온프레미스 서버만 사용하면 IP 차단 시 대체할 서버가 없다..**
+  - AWS 클라우드와 온프레미스를 연결하는 하이브리드 클러스터를 구성해보자!
+- **크롤링 노드가 IP 차단되면 수동으로 새 서버를 구축하고 클러스터에 조인하는 작업이 너무 번거롭다..**
+  - Terraform으로 AWS 클라우드 노드 자동 생성 및 Kubernetes 클러스터 자동 조인을 구현해보자!
+- **새 노드를 추가할 때마다 SSH 접속, 패키지 설치, 클러스터 조인을 수동으로 해야 한다..**
+  - Terraform provisioner를 사용하여 모든 과정을 자동화해보자!
+- **노드 추가 후 라벨링, 설정 작업도 수동으로 해야 한다..**
+  - Terraform으로 노드 조인 후 자동으로 라벨을 추가하도록 구현해보자!
+- **네트워크 설정, 보안 그룹, 인증서 문제 등 해결이 복잡하다..**
+  - 스크립트와 Terraform을 통해 모든 설정을 자동화하고 문제 해결 가이드를 제공하자!
 
 ## 이거 어떻게 사용하는 거에요?
 
-### 시연 영상 1: Selenium IDE로 매크로 Side 파일 생성
+### 과정 1: Terraform으로 VPC 자동 생성
 
-![demo](documents/demo-make-side.gif)
+![demo](documents/aws-dashboard-vpc.gif)
 
-*영상 1-1: Selenium IDE를 사용하여 웹 자동화 매크로를 녹화하고 .side 파일로 내보내는 과정*
+### 과정 2: Terraform으로 인스턴스 및 방화벽 규칙 설정
 
-![demo](documents/demo-side-macro.gif)
+![demo](documents/aws-dashboard-node.gif)
 
-*영상 1-2: .side 파일를 이용한 매크로 실행 [Selenium IDE]*
+### 과정 3: 홈서버의 K8S API Server로 노드 Join 요청
 
-### 시연 영상 2: Side 파일 등록
+![demo](documents/k8s-cli-node.gif)
 
-![demo](documents/demo-upload-side.gif)
+### 과정 4: 홈서버의 K8S API Server로 노드 라벨링
 
-*영상 2: Swagger UI를 통해 생성한 .side 파일을 Pan API에 업로드하는 과정*
-
-### 시연 영상 3: noVNC를 통한 세션 모니터링
-
-![demo](documents/demo-monitor-session.gif)
-
-*영상 3: Selenium Grid Node의 noVNC를 통해 실제 브라우저 세션이 실행되는 모습을 실시간으로 확인*
-
-### 시연 영상 4: 템플릿 파라미터를 활용한 동적 시나리오 실행
-
-![demo](documents/demo-make-dynamic-side.gif)
-
-*영상 4-1: Jinja2 템플릿이 포함된 Side 시나리오를 생성하는 과정*
-
-![demo](documents/demo-siderun-dynamic.gif)
-
-*영상 4-2: Jinja2 템플릿이 포함된 Side 파일에 다양한 파라미터를 전달하여 동적으로 시나리오를 실행하는 과정*
+![demo](documents/k8s-cli-label.gif)
 
 ## 그래서 의도한 대로 성과가 나왔나요?
 
-1. **QA 시나리오 실행 속도 최적화**
-    - **순차 실행 vs 병렬 실행**: 전자 작업(약 20분)을 후자 작업(약 2분)로 단축
+1. **노드 추가 작업 자동화**
+    - **수동 작업 vs 자동화**: 수동 작업(약 30분)을 자동화(약 5분)로 단축
+    - SSH 접속, 패키지 설치, 클러스터 조인 등 모든 과정이 자동화됨
 
-2. **세션 Pool 확보 최적화**
-    - **세션 확보 X vs 세션 확보 O**:  전자 작업(약 11초)을 후자 작업(약 6초)로 단축
+2. **하이브리드 클러스터 구성**
+    - 온프레미스 Control Plane과 AWS 클라우드 노드를 연결하여 IP 차단 시 빠른 대체 가능
+    - 네트워크 설정, 보안 그룹, 인증서 문제 등을 자동으로 해결
 
-3. **템플릿 엔진을 통한 파라미터 활용성 극대화**
-    - **10개 키워드 검색에 대한 녹화작업 vs 동적 파라미터로 10개 키워드 검색 녹화작업**:  전자 작업(약 18분)을 후자 작업(약 2분)로 단축
+3. **인프라 관리의 일관성 확보**
+    - Terraform을 통한 Infrastructure as Code로 모든 노드가 동일한 설정으로 구성됨
+    - 버전 관리 및 재현 가능한 인프라 구성
 
-4. **세션 Pool 초기화 작업의 비동기 처리**
-    - **동기적 세션 확보 vs 비동기적 세션 확보**: 동기적 세션 확보 작업(약 2분)을 비동기적 세션 확보 작업(약 5초)로 단축
+4. **운영 효율성 향상**
+    - IP 차단 발생 시 즉시 새 노드 추가 가능
+    - 노드 라벨링, 설정 작업까지 자동화로 운영 부담 감소
 
 ## 프로젝트 구조
 
 ```
-src/
-├── models.py              # 데이터 모델 (SideProject, SideTest, SideSuite, SideCommand)
-├── loader.py              # Side 파일 로딩 및 파싱
-├── parser.py              # Jinja2 템플릿 파서
-├── runner.py              # Side 실행 로직
-├── session_pool.py        # Selenium Grid 세션 풀 관리
-├── logger_config.py       # 로깅 설정
-└── repositories/
-    ├── side_repository.py              # Side 파일 저장소 인터페이스
-    ├── filesystem_side_repository.py   # FileSystem 기반 side 파일 저장소 구현체
-    ├── lock_repository.py              # Lock 관리 인터페이스
-    └── filesystem_lock_repository.py   # FileSystem 기반 Lock 관리 구현체
+hermes/
+├── versions.tf               # Terraform 버전 제약
+├── providers.tf              # Terraform 프로바이더 설정
+├── main-vpc.tf               # VPC, 서브넷, 라우팅 테이블 구성
+├── main-node.tf              # EC2 인스턴스, 보안 그룹, SSH 키 생성
+├── main-k8sjoin.tf           # Kubernetes 클러스터 조인 리소스
+├── main-label.tf             # 노드 라벨 추가 리소스
+├── outputs.tf                # Terraform 출력값 정의
+├── variables.tf              # Terraform 변수 정의
+├── terraform.tfvars.example  # 변수 설정 예시 파일
+├── terraform.tfvars          # 변수 설정 파일
+└── scripts/
+    ├── setup-controlplane.sh # Control Plane 초기화 스크립트
+    ├── init-node.sh          # 노드 초기 설정 스크립트
+    └── join-cluster.sh       # 클러스터 조인 스크립트
 ```
