@@ -35,20 +35,28 @@ resource "aws_security_group" "k8s_node" {
   }
 
   # Kubelet API (TCP 10250) - Control Plane에서 워커 노드의 kubelet에 접근
+  # 온프레미스 Control Plane과 VPC 내부 모두 허용
   ingress {
     from_port   = 10250
     to_port     = 10250
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-    description = "Kubelet API"
+    cidr_blocks = concat(
+      [aws_vpc.hermes.cidr_block],
+      var.k8s_api_server_ip != "" ? ["${var.k8s_api_server_ip}/32"] : []
+    )
+    description = "Kubelet API (Control Plane access)"
   }
 
   # Pod 간 통신 (UDP 8472) - Flannel VXLAN
+  # 온프레미스 Control Plane 노드와 VPC 내부 모두 허용
   ingress {
     from_port   = 8472
     to_port     = 8472
     protocol    = "udp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
+    cidr_blocks = concat(
+      [aws_vpc.hermes.cidr_block],
+      var.k8s_api_server_ip != "" ? ["${var.k8s_api_server_ip}/32"] : []
+    )
     description = "Pod-to-Pod communication (Flannel VXLAN)"
   }
 
