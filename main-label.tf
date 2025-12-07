@@ -4,14 +4,10 @@ resource "null_resource" "label_node" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      # 임시 CA 인증서 파일 생성
-      echo '${var.k8s_cluster_ca_certificate}' | base64 -d > /tmp/k8s-ca.crt
-      
-      # kubectl로 라벨 추가
-      kubectl label nodes ${var.node_name} cloud-server=true --overwrite
-      
-      # 임시 파일 정리
-      rm -f /tmp/k8s-ca.crt
+      ssh -o StrictHostKeyChecking=no \
+        -i "${var.k8s_control_plane_ssh_key}" \
+        "${var.k8s_control_plane_ssh_user}@${var.k8s_control_plane_ssh_host}" \
+        "kubectl label nodes ${var.node_name} cloud-server=true --overwrite"
     EOT
   }
 }

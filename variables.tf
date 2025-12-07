@@ -55,3 +55,21 @@ variable "developer_local_ip" {
   description = "개발자 로컬 IP 주소 (CIDR 형식, 예: 1.2.3.4/32)"
   type        = string
 }
+
+variable "k8s_control_plane_ssh_host" {
+  description = "Control Plane 서버 SSH 호스트"
+  type        = string
+  default     = "main-node.me"
+}
+
+variable "k8s_control_plane_ssh_user" {
+  description = "Control Plane 서버 SSH 사용자명 (기본값: root 또는 ubuntu)"
+  type        = string
+  default     = "root"
+}
+
+variable "k8s_control_plane_ssh_key" {
+  description = "Control Plane 서버 SSH 키 파일 경로 (선택사항, 비어있으면 password 인증 또는 기본 키 사용)"
+  type        = string
+  default     = ""
+}
