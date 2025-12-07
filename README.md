@@ -27,7 +27,7 @@ IP 차단된 크롤링 컨테이너들을 새로운 클라우드 노드로 자�
 - **AWS 클라우드 서버를 새로 띄우려면 꼭 내가 직접 AWS 콘솔창에 입력해야 하나? 자동화할 수는 없는건가..**
   - Terraform으로 AWS 클라우드 노드 자동 생성 및 Kubernetes 클러스터 자동 조인을 구현해보자!
 - **Docker Compose로 1개 이상의 서버들의 컨테이너를 종합관리하는 것이 너무 힘들다..**
-  - K8S를 도입해서 다중 노드의 컨테이너를 하나의 서버에서 제어해보자!
+  - K8s를 도입해서 다중 노드의 컨테이너를 하나의 서버에서 제어해보자!
 - **크롤링 컨테이너 말고도 연산을 위한 컨테이너, Airflow 컨테이너도 띄워야 하는데 이것들은 홈서버에서만 띄우고 싶다..**
   - 클라우드 노드에만 특정 라벨을 부여해서 해당 라벨의 노드에는 크롤링 Pod만 띄우자!
 
@@ -41,11 +41,11 @@ IP 차단된 크롤링 컨테이너들을 새로운 클라우드 노드로 자�
 
 ![demo](documents/aws-dashboard-node.gif)
 
-### 과정 3: 홈서버의 K8S API Server로 노드 Join 요청
+### 과정 3: 홈서버의 K8s API Server로 노드 Join 요청
 
 ![demo](documents/k8s-cli-node.gif)
 
-### 과정 4: 홈서버의 K8S API Server로 노드 라벨링
+### 과정 4: 홈서버의 K8s API Server로 노드 라벨링
 
 ![demo](documents/k8s-cli-label.gif)
 
