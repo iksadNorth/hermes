@@ -34,16 +34,7 @@ resource "aws_security_group" "k8s_node" {
     description = "SSH access from developer local IP"
   }
 
-  # Kubernetes API 서버 (TCP 6443) - 노드 간 통신
-  ingress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.hermes.cidr_block]
-    description = "Kubernetes API server"
-  }
-
-  # Kubelet API (TCP 10250) - 노드 간 통신
+  # Kubelet API (TCP 10250) - Control Plane에서 워커 노드의 kubelet에 접근
   ingress {
     from_port   = 10250
     to_port     = 10250
