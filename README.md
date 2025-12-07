@@ -1,134 +1,99 @@
 # Hermes
 
-AWS 클라우드 서버에 새로운 노드를 생성하고 Kubernetes 클러스터에 통합하는 Terraform 프로젝트입니다.
+헤르메스는 길 잃은 나그네들의 수호신입니다. 
 
-## 개요
+![헤르메스 그림](documents/cartoon-hermes.png)
 
-Hermes는 AWS EC2 인스턴스를 생성하고, 이를 Kubernetes 클러스터에 워커 노드로 추가하며, 클라우드 서버임을 나타내는 라벨을 자동으로 설정합니다. 이 라벨을 통해 특정 Pod들을 클라우드 노드에만 배치할 수 있습니다.
+*그림 0: 길 잃은 양들을 인도하는 헤르메스 그림*
 
-## 주요 기능
+해당 프로젝트는 과도한 트래픽으로 인해 IP 차단된 크롤링 노드들을 새로운 서버로 자리를 바꿔 
+작업순단없이 작업을 이어갈 수 있도록 도움을 주는 작업을 수행합니다.
 
-- AWS EC2 인스턴스 자동 생성
-- Kubernetes 클러스터 자동 조인
-- 클라우드 서버 라벨 자동 설정 (`cloud-server=true`)
-- 추가 커스텀 라벨 지원
+AWS 클라우드 서버에 새로운 노드를 생성하고 Kubernetes 클러스터에 통합합니다.
+그리고 IP 차단된 크롤링 컨테이너들을 다시 새로운 노드에 띄웁니다.
 
-## 사전 요구사항
+이 모든 것은 사람이 직접 수행하는 것이 아닌 Terraform이라는 IaC 툴을 이용하여 자동화를 이뤘습니다.
 
-1. Terraform >= 1.0
-2. AWS CLI 설정 및 자격 증명
-3. Kubernetes 클러스터 접근 권한
-4. `kubectl` 명령어 (로컬 환경)
-5. Kubernetes 클러스터 조인 명령어 (kubeadm join 또는 EKS bootstrap 스크립트)
+![시스템 아키텍처](documents/architecture-diagram.png)
 
-## 사용 방법
+## 왜 이런 식으로 만들었나요?
 
-### 1. 변수 설정
+- **크롤링 데이터 수집할 때마다 HTML 구조 분석하는 거 너무 힘들다..**
+  - 화면 녹화 매크로 툴을 사용해보자! - [1]
+- **웹 프로덕트 테스트를 수기로 하니까 너무 귀찮다. 해야하는 건데 후순위로 밀리게 되네..**
+  - 화면 녹화 매크로 툴을 사용해보자! - [2]
+- **1개의 페이지를 재귀적으로 크롤링하니까 20분 정도 걸리네. 너무 오래걸린다..**
+  - 병렬 분산 처리를 통해 시간 단축을 해보자!
+- **데이터 파이프라인에 편입하려면 Airflow 이미지 크기가 비대해진다. 빌드 시간이 너무 오래걸린다..**
+  - REST API 웹서버로 만들어서 HTTP 통신으로 단순화해보자!
+- **크롤링할 때마다 크롬창을 띄워야 하니 리소스 낭비가 너무 심하다..**
+  - 서버 가동 시, 미리 크롬창을 여러 개 띄워놓고 재활용해보자!
+- **세션 재활용을 하니까 동시에 하나의 세션을 사용하면 간섭이 일어나네..**
+  - 요청당 Lock을 부여해서 트랜잭션을 구현해보자!
+- **아니 네이버에 검색하는 시나리오를 키워드마다 녹화해야 하나? 녹화 작업에 시간을 너무 많이 쏟아야 하는데..**
+  - Side 파일 자체를 Jinja2 템플릿화해서 1번의 녹화로 N개의 시나리오로 만들어보자!
 
-`terraform.tfvars` 파일을 생성하여 필요한 변수들을 설정하세요:
+## 이거 어떻게 사용하는 거에요?
 
-```hcl
-aws_region = "ap-northeast-2"
-node_name  = "cloud-node-01"
+### 시연 영상 1: Selenium IDE로 매크로 Side 파일 생성
 
-instance_type = "t3.medium"
-key_name      = "your-key-pair-name"
-subnet_id     = "subnet-xxxxxxxxx"
+![demo](documents/demo-make-side.gif)
 
-# Kubernetes 클러스터 정보
-k8s_cluster_endpoint       = "https://your-k8s-api-server:6443"
-k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64 인코딩된 CA 인증서
-k8s_cluster_token          = "your-k8s-token"
-k8s_join_command           = "kubeadm join ..." # 또는 EKS bootstrap 스크립트
+*영상 1-1: Selenium IDE를 사용하여 웹 자동화 매크로를 녹화하고 .side 파일로 내보내는 과정*
 
-# 추가 라벨 (선택사항)
-additional_labels = {
-  "environment" = "production"
-  "node-type"   = "compute"
-}
+![demo](documents/demo-side-macro.gif)
+
+*영상 1-2: .side 파일를 이용한 매크로 실행 [Selenium IDE]*
+
+### 시연 영상 2: Side 파일 등록
+
+![demo](documents/demo-upload-side.gif)
+
+*영상 2: Swagger UI를 통해 생성한 .side 파일을 Pan API에 업로드하는 과정*
+
+### 시연 영상 3: noVNC를 통한 세션 모니터링
+
+![demo](documents/demo-monitor-session.gif)
+
+*영상 3: Selenium Grid Node의 noVNC를 통해 실제 브라우저 세션이 실행되는 모습을 실시간으로 확인*
+
+### 시연 영상 4: 템플릿 파라미터를 활용한 동적 시나리오 실행
+
+![demo](documents/demo-make-dynamic-side.gif)
+
+*영상 4-1: Jinja2 템플릿이 포함된 Side 시나리오를 생성하는 과정*
+
+![demo](documents/demo-siderun-dynamic.gif)
+
+*영상 4-2: Jinja2 템플릿이 포함된 Side 파일에 다양한 파라미터를 전달하여 동적으로 시나리오를 실행하는 과정*
+
+## 그래서 의도한 대로 성과가 나왔나요?
+
+1. **QA 시나리오 실행 속도 최적화**
+    - **순차 실행 vs 병렬 실행**: 전자 작업(약 20분)을 후자 작업(약 2분)로 단축
+
+2. **세션 Pool 확보 최적화**
+    - **세션 확보 X vs 세션 확보 O**:  전자 작업(약 11초)을 후자 작업(약 6초)로 단축
+
+3. **템플릿 엔진을 통한 파라미터 활용성 극대화**
+    - **10개 키워드 검색에 대한 녹화작업 vs 동적 파라미터로 10개 키워드 검색 녹화작업**:  전자 작업(약 18분)을 후자 작업(약 2분)로 단축
+
+4. **세션 Pool 초기화 작업의 비동기 처리**
+    - **동기적 세션 확보 vs 비동기적 세션 확보**: 동기적 세션 확보 작업(약 2분)을 비동기적 세션 확보 작업(약 5초)로 단축
+
+## 프로젝트 구조
+
 ```
-
-### 2. Terraform 실행
-
-```bash
-# 초기화
-terraform init
-
-# 실행 계획 확인
-terraform plan
-
-# 적용
-terraform apply
+src/
+├── models.py              # 데이터 모델 (SideProject, SideTest, SideSuite, SideCommand)
+├── loader.py              # Side 파일 로딩 및 파싱
+├── parser.py              # Jinja2 템플릿 파서
+├── runner.py              # Side 실행 로직
+├── session_pool.py        # Selenium Grid 세션 풀 관리
+├── logger_config.py       # 로깅 설정
+└── repositories/
+    ├── side_repository.py              # Side 파일 저장소 인터페이스
+    ├── filesystem_side_repository.py   # FileSystem 기반 side 파일 저장소 구현체
+    ├── lock_repository.py              # Lock 관리 인터페이스
+    └── filesystem_lock_repository.py   # FileSystem 기반 Lock 관리 구현체
 ```
-
-### 3. 노드 확인
-
-노드가 클러스터에 추가되고 라벨이 설정되었는지 확인:
-
-```bash
-kubectl get nodes --show-labels
-```
-
-`cloud-server=true` 라벨이 설정된 노드를 확인할 수 있습니다.
-
-## 변수 설명
-
-### 필수 변수
-
-- `node_name`: Kubernetes 노드 이름
-- `key_name`: AWS EC2 Key Pair 이름
-- `subnet_id`: EC2 인스턴스를 배치할 서브넷 ID
-- `k8s_cluster_endpoint`: Kubernetes 클러스터 API 서버 엔드포인트
-- `k8s_cluster_ca_certificate`: Kubernetes 클러스터 CA 인증서 (base64)
-- `k8s_cluster_token`: Kubernetes 클러스터 인증 토큰
-- `k8s_join_command`: Kubernetes 클러스터 조인 명령어
-
-### 선택 변수
-
-- `aws_region`: AWS 리전 (기본값: `ap-northeast-2`)
-- `instance_type`: EC2 인스턴스 타입 (기본값: `t3.medium`)
-- `security_group_ids`: 보안 그룹 ID 목록 (비어있으면 자동 생성)
-- `cloud_label_key`: 클라우드 서버 라벨 키 (기본값: `cloud-server`)
-- `cloud_label_value`: 클라우드 서버 라벨 값 (기본값: `true`)
-- `additional_labels`: 추가 라벨 맵
-- `tags`: EC2 인스턴스 태그
-
-## 출력값
-
-- `instance_id`: 생성된 EC2 인스턴스 ID
-- `instance_private_ip`: EC2 인스턴스의 Private IP
-- `instance_public_ip`: EC2 인스턴스의 Public IP (있는 경우)
-- `node_name`: Kubernetes 노드 이름
-- `node_labels`: 노드에 설정된 라벨
-
-## Pod 배치 예시
-
-클라우드 노드에만 Pod를 배치하려면 다음과 같이 nodeSelector를 사용하세요:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-cloud-pod
-spec:
-  nodeSelector:
-    cloud-server: "true"
-  containers:
-  - name: app
-    image: nginx
-```
-
-## 주의사항
-
-1. Kubernetes 클러스터 조인 명령어는 클러스터 타입에 따라 다릅니다:
-   - **kubeadm 클러스터**: `kubeadm join <control-plane>:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>`
-   - **EKS 클러스터**: EKS optimized AMI를 사용하고 bootstrap 스크립트를 실행해야 합니다.
-
-2. 보안 그룹이 자동 생성되는 경우, 필요한 포트를 추가로 열어야 할 수 있습니다 (예: K8s API 서버 포트).
-
-3. IAM 역할은 기본 권한만 포함되어 있습니다. 필요에 따라 추가 권한을 부여해야 할 수 있습니다.
-
-## 라이선스
-
-MIT
-
