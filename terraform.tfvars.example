@@ -1,5 +1,4 @@
 node_name                = "cloud-node-01"
-# subnet_id              = ""  # 비어있으면 자동 생성된 VPC의 public 서브넷 사용
 
 k8s_cluster_endpoint     = "https://your-k8s-api-server:6443"
 k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64
@@ -8,4 +7,11 @@ k8s_join_command         = "kubeadm join ..."
 
 # API 서버 도메인 매핑 (선택사항)
 k8s_api_server_domain    = "main-node.me"  # 도메인
-k8s_api_server_ip       = "1.2.3.4"       # API 서버 공인 IP
+k8s_api_server_ip        = "1.2.3.4"       # API 서버 공인 IP
+
+# 해당 프로젝트 수행 PC 
+developer_local_ip       = "xxx.xxx.xxx.xxx/32"
+
+# Control Plane 서버 정보
+k8s_control_plane_ssh_user  = "root"
+k8s_control_plane_ssh_key   = "~/.ssh/control_plane_ssh_key.pem"
