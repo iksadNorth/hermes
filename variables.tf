@@ -27,14 +27,16 @@ variable "k8s_cluster_ca_certificate" {
 }
 
 variable "k8s_cluster_token" {
-  description = "Kubernetes 클러스터 인증 토큰"
+  description = "Kubernetes 클러스터 인증 토큰 (현재 사용되지 않음, K8S_JOIN_COMMAND에 토큰이 포함됨)"
   type        = string
+  default     = ""
   sensitive   = true
 }
 
 variable "k8s_join_command" {
-  description = "Kubernetes 클러스터 조인 명령어"
+  description = "Kubernetes 클러스터 조인 명령어 (비어있으면 Control Plane에서 자동 생성)"
   type        = string
+  default     = ""
   sensitive   = true
 }
 

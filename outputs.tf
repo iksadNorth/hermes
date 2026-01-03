@@ -28,3 +28,9 @@ output "ssh_key_name" {
   description = "AWS Key Pair 이름"
   value       = aws_key_pair.hermes.key_name
 }
+
+output "k8s_join_command" {
+  description = "Kubernetes 클러스터 조인 명령어 (자동 생성 또는 terraform.tfvars에서 가져옴)"
+  value       = local.k8s_join_command
+  sensitive   = true
+}

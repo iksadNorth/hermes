@@ -3,7 +3,8 @@ node_name                = "cloud-node-01"
 k8s_cluster_endpoint     = "https://your-k8s-api-server:6443"
 k8s_cluster_ca_certificate = "LS0tLS1CRUdJTi..." # base64
 k8s_cluster_token        = "your-k8s-token"
-k8s_join_command         = "kubeadm join ..."
+# ssh user@main-node.me "kubeadm token create --print-join-command"
+k8s_join_command         = "kubeadm join main-node.me:6443 --token <토큰> --discovery-token-ca-cert-hash sha256:<해시>"
 
 # API 서버 도메인 매핑 (선택사항)
 k8s_api_server_domain    = "main-node.me"  # 도메인
@@ -13,5 +14,6 @@ k8s_api_server_ip        = "1.2.3.4"       # API 서버 공인 IP
 developer_local_ip       = "xxx.xxx.xxx.xxx/32"
 
 # Control Plane 서버 정보
+k8s_control_plane_ssh_host  = "main-node.me"
 k8s_control_plane_ssh_user  = "root"
 k8s_control_plane_ssh_key   = "~/.ssh/control_plane_ssh_key.pem"

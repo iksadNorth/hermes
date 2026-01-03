@@ -31,9 +31,9 @@ resource "null_resource" "join_cluster" {
         ubuntu@${local.ssh_host} \
         "chmod +x /tmp/join-cluster.sh && \
          NODE_NAME='${var.node_name}' \
-         K8S_JOIN_COMMAND='${var.k8s_join_command}' \
+         K8S_JOIN_COMMAND='${local.k8s_join_command}' \
          K8S_CLUSTER_ENDPOINT='${var.k8s_cluster_endpoint}' \
-         K8S_CLUSTER_TOKEN='${var.k8s_cluster_token}' \
+         K8S_CLUSTER_TOKEN='${var.k8s_cluster_token != "" ? var.k8s_cluster_token : ""}' \
          K8S_CLUSTER_CA_CERT='${var.k8s_cluster_ca_certificate}' \
          K8S_API_SERVER_DOMAIN='${var.k8s_api_server_domain}' \
          K8S_API_SERVER_IP='${var.k8s_api_server_ip}' \
