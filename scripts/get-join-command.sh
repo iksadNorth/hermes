@@ -32,10 +32,20 @@ if [ -n "$SSH_KEY_PATH" ]; then
   SSH_KEY_PATH="${SSH_KEY_PATH/#\~/$HOME}"
 fi
 
+# 디버그: SSH 키 경로 및 파일 존재 여부 확인
+echo "[DEBUG] SSH_KEY_PATH: $SSH_KEY_PATH" >&2
+echo "[DEBUG] SSH_KEY_PATH exists: $([ -f "$SSH_KEY_PATH" ] && echo 'yes' || echo 'no')" >&2
+if [ -f "$SSH_KEY_PATH" ]; then
+  echo "[DEBUG] SSH_KEY_PATH permissions: $(ls -l "$SSH_KEY_PATH" | awk '{print $1}')" >&2
+fi
+
 # SSH 명령어 구성
-SSH_CMD="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10"
+SSH_CMD="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o LogLevel=DEBUG"
 if [ -n "$SSH_KEY_PATH" ] && [ -f "$SSH_KEY_PATH" ]; then
   SSH_CMD="$SSH_CMD -i $SSH_KEY_PATH"
+  echo "[DEBUG] Using SSH key: $SSH_KEY_PATH" >&2
+else
+  echo "[DEBUG] SSH key not found, using password authentication" >&2
 fi
 
 # Control Plane 노드에서 join command 가져오기
