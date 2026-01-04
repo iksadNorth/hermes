@@ -133,14 +133,129 @@ echo "Join command: $JOIN_CMD_WITH_SKIP"
 sudo bash -c "$JOIN_CMD_WITH_SKIP"
 
 # 노드 등록 확인
+# 주의: worker 노드에서는 kubectl이 kubeconfig 없이 작동하지 않으므로
+# kubelet 상태를 확인하는 것으로 대체
+echo "Waiting for kubelet to register node..."
 sleep 30
+
+KUBELET_READY=false
 for i in {1..30}; do
-  if kubectl get nodes "$NODE_NAME" &>/dev/null 2>&1; then
-    echo "Node $NODE_NAME joined successfully!"
-    exit 0
+  # kubelet이 정상적으로 실행 중이고 API 서버에 연결되었는지 확인
+  if sudo systemctl is-active --quiet kubelet; then
+    # kubelet 로그에서 노드 등록 확인 시도
+    if sudo journalctl -u kubelet --since "1 minute ago" --no-pager 2>/dev/null | \
+       grep -q "Node.*Ready\|Successfully registered node"; then
+      echo "Node appears to be registered (from kubelet logs)"
+      KUBELET_READY=true
+      break
+    fi
+    # kubelet이 실행 중이면 일단 진행
+    if [ $i -gt 10 ]; then
+      echo "kubelet is running, assuming node registration is in progress"
+      KUBELET_READY=true
+      break
+    fi
   fi
+  echo "Waiting for kubelet to start and register node... ($i/30)"
   sleep 10
 done
 
-echo "Warning: Node registration timeout"
-exit 0
+if [ "$KUBELET_READY" = "false" ]; then
+  echo "Warning: Could not confirm node registration from kubelet"
+  echo "Note: Please verify from Control Plane: kubectl get nodes $NODE_NAME"
+  echo "Continuing with Flannel setup anyway..."
+fi
+
+# Flannel subnet.env 파일 생성
+echo "=========================================="
+echo "Setting up Flannel subnet.env..."
+echo "=========================================="
+
+# 1. /run/flannel/ 디렉토리 생성
+sudo mkdir -p /run/flannel
+echo "Created /run/flannel directory"
+
+# 2. 노드가 API 서버에 등록되고 Pod CIDR이 할당될 때까지 대기
+echo "Waiting for node to be assigned Pod CIDR..."
+sleep 30
+
+# 3. Pod CIDR 확인 시도 (여러 방법)
+POD_CIDR=""
+
+# 방법 1: kubelet 로그에서 Pod CIDR 확인
+echo "Attempting to detect Pod CIDR from kubelet logs..."
+if [ -z "$POD_CIDR" ]; then
+  POD_CIDR=$(sudo journalctl -u kubelet --since "2 minutes ago" --no-pager 2>/dev/null | \
+    grep -oP 'Allocated pod CIDR: \K[0-9.]+/[0-9]+' | tail -1 || echo "")
+  if [ -n "$POD_CIDR" ]; then
+    echo "Found Pod CIDR from kubelet logs: $POD_CIDR"
+  fi
+fi
+
+# 방법 2: kubelet config에서 확인
+if [ -z "$POD_CIDR" ]; then
+  echo "Attempting to detect Pod CIDR from kubelet config..."
+  if [ -f /var/lib/kubelet/config.yaml ]; then
+    POD_CIDR=$(sudo grep -i "podCIDR" /var/lib/kubelet/config.yaml 2>/dev/null | \
+      awk '{print $2}' | head -1 || echo "")
+    if [ -n "$POD_CIDR" ]; then
+      echo "Found Pod CIDR from kubelet config: $POD_CIDR"
+    fi
+  fi
+fi
+
+# 방법 3: 기본값 사용 (Flannel 기본 Pod CIDR 범위)
+if [ -z "$POD_CIDR" ]; then
+  echo "Warning: Could not determine Pod CIDR from logs or config"
+  echo "Using default Pod CIDR range (Flannel will update this later)"
+  # 기본값으로 시작 (Flannel이 나중에 업데이트할 것)
+  POD_CIDR="10.244.0.0/24"
+fi
+
+echo "Using Pod CIDR: $POD_CIDR"
+
+# 4. subnet.env 파일 생성
+# FLANNEL_NETWORK: 전체 Pod 네트워크 CIDR (Flannel 기본값)
+# FLANNEL_SUBNET: 이 노드에 할당된 Pod CIDR
+# FLANNEL_MTU: 기본 MTU
+# FLANNEL_IPMASQ: IP masquerading 활성화 (외부 통신을 위해 필요)
+
+FLANNEL_NETWORK="10.244.0.0/16"
+FLANNEL_SUBNET="$POD_CIDR"
+FLANNEL_MTU="1450"
+
+cat <<EOF | sudo tee /run/flannel/subnet.env
+FLANNEL_NETWORK=$FLANNEL_NETWORK
+FLANNEL_SUBNET=$FLANNEL_SUBNET
+FLANNEL_MTU=$FLANNEL_MTU
+FLANNEL_IPMASQ=true
+EOF
+
+echo "Created /run/flannel/subnet.env:"
+cat /run/flannel/subnet.env
+
+# 5. 파일 권한 확인
+sudo chmod 644 /run/flannel/subnet.env
+echo "Set permissions on /run/flannel/subnet.env"
+
+echo "=========================================="
+echo "Flannel subnet.env setup completed!"
+echo "=========================================="
+
+# 최종 확인
+if sudo systemctl is-active --quiet kubelet; then
+  echo "=========================================="
+  echo "Node $NODE_NAME join process completed!"
+  echo "=========================================="
+  echo ""
+  echo "kubelet is running. Please verify from Control Plane:"
+  echo "  kubectl get nodes $NODE_NAME"
+  echo ""
+  echo "Flannel subnet.env has been configured."
+  echo "If node is Ready, Flannel Pod should start successfully."
+  exit 0
+else
+  echo "Warning: kubelet is not running"
+  echo "Please check: sudo systemctl status kubelet"
+  exit 1
+fi

@@ -25,39 +25,13 @@ resource "aws_security_group" "k8s_node" {
   name   = "hermes-k8s-node-${var.node_name}"
   vpc_id = aws_vpc.hermes.id
 
-  # SSH 접근 (개발자 로컬 IP만)
+  # 인바운드: 모든 트래픽 허용
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.developer_local_ip]
-    description = "SSH access from developer local IP"
-  }
-
-  # Kubelet API (TCP 10250) - Control Plane에서 워커 노드의 kubelet에 접근
-  # 온프레미스 Control Plane과 VPC 내부 모두 허용
-  ingress {
-    from_port   = 10250
-    to_port     = 10250
-    protocol    = "tcp"
-    cidr_blocks = concat(
-      [aws_vpc.hermes.cidr_block],
-      var.k8s_api_server_ip != "" ? ["${var.k8s_api_server_ip}/32"] : []
-    )
-    description = "Kubelet API (Control Plane access)"
-  }
-
-  # Pod 간 통신 (UDP 8472) - Flannel VXLAN
-  # 온프레미스 Control Plane 노드와 VPC 내부 모두 허용
-  ingress {
-    from_port   = 8472
-    to_port     = 8472
-    protocol    = "udp"
-    cidr_blocks = concat(
-      [aws_vpc.hermes.cidr_block],
-      var.k8s_api_server_ip != "" ? ["${var.k8s_api_server_ip}/32"] : []
-    )
-    description = "Pod-to-Pod communication (Flannel VXLAN)"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all inbound traffic"
   }
 
   # 아웃바운드: 모든 트래픽 허용
