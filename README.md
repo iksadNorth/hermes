@@ -44,6 +44,11 @@ Terraform을 활용해 AWS EC2 인스턴스를 자동으로 프로비저닝하�
 
 ![demo](documents/k8s-cli-label.png)
 
+### 결과 4: 클라우드 서버에만 띄워진 크롤링 노드
+
+![demo](documents/k8s-pod-in-cloud.png)
+
+
 ## 그래서 의도한 대로 성과가 나왔나요?
 
 1. **노드 추가 작업 자동화**
