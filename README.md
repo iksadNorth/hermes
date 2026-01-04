@@ -31,16 +31,16 @@ Terraform을 활용해 AWS EC2 인스턴스를 자동으로 프로비저닝하�
 
 ## 이거 어떻게 작동하는 거에요?
 
-### 과정 1: Terraform Apply에 의해 인스턴스 생성
+### 결과 1: Terraform Apply에 의해 인스턴스 생성
 
 ![demo](documents/aws-dashboard-vpc.png)
 ![demo](documents/aws-dashboard-node.png)
 
-### 과정 3: 홈서버의 K8s API Server로 노드 Join 요청
+### 결과 2: 홈서버의 K8s API Server로 노드 Join 요청
 
 ![demo](documents/k8s-cli-node.png)
 
-### 과정 4: 홈서버의 K8s API Server로 노드 라벨링
+### 결과 3: 홈서버의 K8s API Server로 노드 라벨링
 
 ![demo](documents/k8s-cli-label.png)
 
